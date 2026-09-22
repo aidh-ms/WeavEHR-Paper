@@ -1,0 +1,17 @@
+services:
+  python:  # TODO change this to your project name
+    container_name: python  # TODO change this to your project name
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    init: true
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    env_file:
+      - .env
+      - path: local.env
+        required: false
+    volumes:
+      - ..:/workspaces:cached
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
