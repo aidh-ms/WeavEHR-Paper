@@ -1,5 +1,5 @@
 # Build context: experiments/scalability
-FROM python:3.14-slim
+FROM python:3.14.8-slim-trixie
 
 ARG WEAVEHR_VERSION=0.0.1
 COPY --from=ghcr.io/astral-sh/uv:0.11.21 /uv /bin/

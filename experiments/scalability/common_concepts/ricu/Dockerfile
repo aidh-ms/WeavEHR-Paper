@@ -1,5 +1,5 @@
 # Build context: experiments/scalability
-FROM rocker/r-ver:4.5
+FROM rocker/r-ver:4.6.1
 
 ARG RICU_VERSION=0.6.3
 RUN install2.r --error --skipinstalled ricu arrow \

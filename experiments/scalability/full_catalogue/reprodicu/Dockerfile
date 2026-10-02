@@ -1,5 +1,5 @@
 # Build context: experiments/scalability
-FROM python:3.13-slim
+FROM python:3.13.16-slim-trixie
 
 # reprodICU has no releases; pin the commit that was evaluated.
 ARG REPRODICU_COMMIT=c5a017f3e0a71753196f945daebfe177e3adf573
