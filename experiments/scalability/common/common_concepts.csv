@@ -1,0 +1,77 @@
+category,ricu,weavehr,description
+blood gas,be,base_excess,base excess
+blood gas,cai,calcium_ionized,calcium ionized
+blood gas,fio2,fraction_of_inspired_oxygen,fraction of inspired oxygen
+blood gas,lact,lactate,lactate
+blood gas,methb,methemoglobin,methemoglobin
+blood gas,pco2,CO2_partial_pressure,CO2 partial pressure
+blood gas,ph,pH_of_blood,pH of blood
+blood gas,po2,O2_partial_pressure,O2 partial pressure
+blood gas,tco2,totcal_CO2,totcal CO2
+chemistry,alb,albumin,albumin
+chemistry,alp,alkaline_phosphatase,alkaline phosphatase
+chemistry,alt,alanine_aminotransferase,alanine aminotransferase
+chemistry,ast,aspartate_aminotransferase,aspartate aminotransferase
+chemistry,bicar,bicarbonate,bicarbonate
+chemistry,bili,total_bilirubin,total bilirubin
+chemistry,bili_dir,bilirubin_direct,bilirubin direct
+chemistry,bun,blood_urea_nitrogen,blood urea nitrogen
+chemistry,ca,calcium,calcium
+chemistry,ck,creatine_kinase,creatine kinase
+chemistry,ckmb,creatine_kinase_MB,creatine kinase MB
+chemistry,cl,chloride,chloride
+chemistry,crea,creatinine,creatinine
+chemistry,crp,C_reactive_protein,C-reactive protein
+chemistry,glu,glucose,glucose
+chemistry,k,potassium,potassium
+chemistry,mg,magnesium,magnesium
+chemistry,na,sodium,sodium
+chemistry,phos,phosphate,phosphate
+chemistry,tnt,troponin_t,troponin t
+chemistry,tri,troponin_I,troponin I
+demographics,adm,patient_admission_type,patient admission type
+demographics,age,patient_age,patient age
+demographics,height,patient_height,patient height
+demographics,sex,patient_sex,patient sex
+demographics,weight,patient_weight,patient weight
+hematology,basos,basophils,basophils
+hematology,bnd,band_form_neutrophils,band form neutrophils
+hematology,eos,eosinophils,eosinophils
+hematology,fgn,fibrinogen,fibrinogen
+hematology,hct,hematocrit,hematocrit
+hematology,hgb,hemoglobin,hemoglobin
+hematology,inr_pt,prothrombin_time_international_normalized_ratio,prothrombin time/international normalized ratio
+hematology,lymph,lymphocytes,lymphocytes
+hematology,mch,mean_corpuscular_hemoglobin,mean corpuscular hemoglobin
+hematology,mchc,mean_corpuscular_hemoglobin_concentration,mean corpuscular hemoglobin concentration
+hematology,mcv,mean_corpuscular_volume,mean corpuscular volume
+hematology,neut,neutrophils,neutrophils
+hematology,plt,platelet_count,platelet count
+hematology,pt,prothrombine_time,prothrombine time
+hematology,ptt,partial_thromboplastin_time,partial thromboplastin time
+hematology,rbc,red_blood_cell_count,red blood cell count
+hematology,rdw,erythrocyte_distribution_width,erythrocyte distribution width
+hematology,wbc,white_blood_cell_count,white blood cell count
+medications,abx,antibiotics,antibiotics
+medications,adh_rate,vasopressin_rate,vasopressin rate
+medications,dex,dextrose_as_D10,dextrose (as D10)
+medications,dobu_rate,dobutamine_rate,dobutamine rate
+medications,dopa_rate,dopamine_rate,dopamine rate
+medications,epi_rate,epinephrine_rate,epinephrine rate
+medications,ins,insulin,insulin
+medications,norepi_rate,norepinephrine_rate,norepinephrine rate
+medications,phn_rate,phenylephrine_rate,phenylephrine rate
+neurological,egcs,gcs_eye,GCS eye
+neurological,mgcs,gcs_motor,GCS motor
+neurological,rass,Richmond_agitation_sedation_scale,Richmond agitation sedation scale
+neurological,vgcs,gcs_verbal,GCS verbal
+outcome,death,in_hospital_mortality,in hospital mortality
+output,urine,urine_output,urine output
+respiratory,resp,respiratory_rate,respiratory rate
+respiratory,sao2,arterial_oxygen_saturation,arterial oxygen saturation
+respiratory,spo2,oxygen_saturation,oxygen saturation
+vitals,dbp,diastolic_blood_pressure,diastolic blood pressure
+vitals,hr,heart_rate,heart rate
+vitals,map,mean_arterial_pressure,mean arterial pressure
+vitals,sbp,systolic_blood_pressure,systolic blood pressure
+vitals,temp,temperature,temperature

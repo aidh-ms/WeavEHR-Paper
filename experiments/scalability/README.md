@@ -20,7 +20,7 @@ memory limit were recorded as such.
 ## Running the benchmark
 
 ```
-config.env                   # host paths, datasets, memory limits, repeats, demo switch
+config.env                   # data/output paths, datasets, memory limits, repeats, demo switch
 run_all.sh                   # runs all five tool/setting combinations
 common/bench.sh              # shared driver (build, drop caches, docker run, collect)
 common/measure.sh            # container entrypoint (wall time + cgroup memory)
@@ -30,19 +30,21 @@ full_catalogue/{weavehr,ricu,reprodicu}/     # setting 2: full native catalogue
 ```
 
 Each tool folder has a `Dockerfile`, the tool's run script and a `start.sh`.
-Set the paths in `config.env`, then run a single tool or everything:
+Set `DATA_DIR` and `OUT_DIR` in `config.env`, then run a single tool or everything:
 
 ```sh
 ./common_concepts/weavehr/start.sh
 ./run_all.sh
-DEMO=1 REPEATS=1 MEM_LIMITS=16 ./run_all.sh   # quick test on the PhysioNet demos
 ```
+
+For a quick test on the PhysioNet demos, set `DEMO=1`, `REPEATS=1` and
+`MEM_LIMITS=16` in `config.env`.
 
 Each dataset (MIMIC-IV, eICU-CRD; `DATASETS` in `config.env`) is benchmarked in
 its own container runs, so a tool never processes both at once. Per run, `bench.sh`
 
 - drops the host page cache with a privileged throwaway container
-  (`echo 3 > /proc/sys/vm/drop_caches`; set `DROP_CACHES=0` to skip),
+  (`echo 3 > /proc/sys/vm/drop_caches`),
 - starts the tool with `--memory=<N>g --memory-swap=<N>g` (no swap) and
   `--network none`, with the one dataset mounted read-only at `/input` and a fresh
   run directory mounted at `/output`,
