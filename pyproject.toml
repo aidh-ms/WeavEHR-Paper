@@ -1,5 +1,5 @@
 [project]
-name = "project_name"  # TODO
+name = "weavehr_paper"  # TODO
 description = "Template for python project"  # TODO
 version = "0.0.1"
 license = "MIT"  # TODO
@@ -17,13 +17,16 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.14"
+dependencies = [
+    "weavehr>=0.0.1",
+]
 
 [project.urls]
-homepage = "https://github.com/Paul-B98/python-project-template"  # TODO
-repository = "https://github.com/Paul-B98/python-project-template"  # TODO
-changelog = "https://github.com/Paul-B98/python-project-template/releases"  # TODO
-issues = "https://github.com/Paul-B98/python-project-template/issues"  # TODO
-documentation = "https://github.com/Paul-B98/python-project-template/wiki"  # TODO
+homepage = "https://github.com/aidh-ms/WeavEHR-Paper"  # TODO
+repository = "https://github.com/aidh-ms/WeavEHR-Paper"  # TODO
+changelog = "https://github.com/aidh-ms/WeavEHR-Paper/releases"  # TODO
+issues = "https://github.com/aidh-ms/WeavEHR-Paper/issues"  # TODO
+documentation = "https://github.com/aidh-ms/WeavEHR-Paper/wiki"  # TODO
 
 [build-system]
 requires = ["hatchling"]
@@ -43,6 +46,7 @@ dev = [
 
 [tool.uv]
 exclude-newer = "P7D"
+exclude-newer-package = { weavehr = false }
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py"]
