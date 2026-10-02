@@ -38,7 +38,7 @@ docker build -t "$IMAGE" -f "$TOOL_DIR/Dockerfile" "$ROOT"
 mkdir -p "$OUT_DIR"
 RESULTS="$OUT_DIR/results.csv"
 STEPS="$OUT_DIR/steps.csv"
-[[ -f "$RESULTS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,run,status,exit_code,wall_seconds,peak_cgroup_bytes,peak_workingset_bytes,peak_anon_bytes,started_at" > "$RESULTS"
+[[ -f "$RESULTS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,run,status,exit_code,wall_seconds,peak_memory_bytes,started_at" > "$RESULTS"
 [[ -f "$STEPS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,run,step,seconds,status" > "$STEPS"
 
 for dataset in $DATASETS; do
@@ -67,14 +67,14 @@ for dataset in $DATASETS; do
 
       # Defaults in case the container died before writing its metrics.
       status=failed exit_code=$rc wall_seconds=NA
-      peak_cgroup_bytes=NA peak_workingset_bytes=NA peak_anon_bytes=NA
+      peak_memory_bytes=NA
       [[ -f "$RUN_DIR/metrics.env" ]] && source "$RUN_DIR/metrics.env"
       [[ "$oom_killed" == true ]] && status=oom
 
       prefix="$SETTING,$TOOL,$MODE,$dataset,$mem,$run"
-      echo "$prefix,$status,$exit_code,$wall_seconds,$peak_cgroup_bytes,$peak_workingset_bytes,$peak_anon_bytes,$started_at" >> "$RESULTS"
+      echo "$prefix,$status,$exit_code,$wall_seconds,$peak_memory_bytes,$started_at" >> "$RESULTS"
       [[ -f "$RUN_DIR/steps.csv" ]] && tail -n +2 "$RUN_DIR/steps.csv" | sed "s|^|$prefix,|" >> "$STEPS"
-      echo "   status=$status wall=${wall_seconds}s peak_ws=$peak_workingset_bytes"
+      echo "   status=$status wall=${wall_seconds}s peak_memory=$peak_memory_bytes"
 
       # Keep logs and metrics only; tool outputs need tens of GB per run.
       rm -rf "$RUN_DIR/data" "$RUN_DIR/work" "$RUN_DIR/tmp"

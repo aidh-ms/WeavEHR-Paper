@@ -54,10 +54,9 @@ its own container runs, so a tool never processes both at once. Per run, `bench.
   `$OUT_DIR/<mode>/<setting>/<tool>/<dataset>/<mem>g/run<i>/`.
   Tool outputs are deleted after each run.
 
-Peak memory is measured inside the container via cgroup v2:
-`peak_cgroup_bytes` (`memory.peak`, includes page cache),
-`peak_workingset_bytes` (usage minus inactive file cache, as `docker stats`)
-and `peak_anon_bytes` (anonymous memory), the latter two sampled every second.
+Peak memory is the container's cgroup v2 `memory.peak`, read at the end of
+the run. It includes the page cache, so tools that read or write a lot of
+data can report values close to the memory limit.
 
 ricu and reprodICU write files next to their source data (ricu's `.fst`
 import, reprodICU's Parquet copies), so they work on a symlinked copy of the
