@@ -22,6 +22,8 @@ memory limit were recorded as such.
 ```
 config.env                   # data/output paths, datasets, memory limits, repeats, demo switch
 run_all.sh                   # runs all five tool/setting combinations
+run_common_concepts.sh       # runs setting 1 only (weavehr, ricu)
+run_full_catalogue.sh        # runs setting 2 only (weavehr, ricu, reprodicu)
 common/bench.sh              # shared driver (build, drop caches, docker run, collect)
 common/measure.sh            # container entrypoint (wall time + cgroup memory)
 common/common_concepts.csv   # common concept set (ricu <-> WeavEHR names)
@@ -34,6 +36,8 @@ Set `DATA_DIR` and `OUT_DIR` in `config.env`, then run a single tool or everythi
 
 ```sh
 ./common_concepts/weavehr/start.sh
+./run_common_concepts.sh
+./run_full_catalogue.sh
 ./run_all.sh
 ```
 
