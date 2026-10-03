@@ -2,7 +2,11 @@
 FROM rocker/r-ver:4.6.1
 
 ARG RICU_VERSION=0.6.3
-RUN install2.r --error --skipinstalled ricu arrow \
+# units is only suggested by ricu but needed for its unit-converting concepts.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libudunits2-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN install2.r --error --skipinstalled ricu arrow units \
     && Rscript -e "stopifnot(packageVersion('ricu') == '${RICU_VERSION}')"
 
 # ricu imports the raw CSVs into its data dir, so it gets a symlinked copy of

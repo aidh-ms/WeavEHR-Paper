@@ -52,7 +52,8 @@ its own container runs, so a tool never processes both at once. Per run, `bench.
   `$OUT_DIR/results.csv`, and the timings of the intermediate steps in
   `$OUT_DIR/steps.csv`. Logs stay in
   `$OUT_DIR/<mode>/<setting>/<tool>/<dataset>/<mem>g/run<i>/`.
-  Tool outputs are deleted after each run.
+  Tool outputs are deleted after each run; their sizes and a recursive file
+  listing are kept in `outputs.txt` in the run directory.
 
 Peak memory is the container's cgroup v2 `memory.peak`, read at the end of
 the run. It includes the page cache, so tools that read or write a lot of

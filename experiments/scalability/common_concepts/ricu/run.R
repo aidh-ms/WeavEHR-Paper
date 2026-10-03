@@ -7,8 +7,32 @@
 suppressPackageStartupMessages(library(ricu))
 data.table::setDTthreads(0L)
 
-# One dataset per run; the demos use the same ricu sources as the full data.
-src <- c("mimic-iv" = "miiv", eicu = "eicu")[[Sys.getenv("DATASET")]]
+# One dataset per run. ricu ships an `eicu_demo` source (the demo CSVs differ
+# from the full ones, e.g. respiratorycare.apneaparams vs apneaparms) but no
+# MIMIC-IV demo source, so the demo is imported as `miiv` with an overriding
+# config: without the table partitioning (the 100 demo patients leave some
+# partitions empty, which ricu cannot merge) and without the full-data row counts.
+demo <- Sys.getenv("DEMO") == "1"
+src <- c("mimic-iv" = "miiv", eicu = if (demo) "eicu_demo" else "eicu")[[
+  Sys.getenv("DATASET")
+]]
+
+if (demo && src == "miiv") {
+  cfg_dir <- "/output/work/ricu-config"
+  cfg <- get_config("data-sources")
+  cfg <- Filter(function(x) x$name == "miiv", cfg)
+  cfg[[1L]]$tables <- lapply(cfg[[1L]]$tables, function(tbl) {
+    tbl$partitioning <- NULL
+    tbl$num_rows <- NULL
+    tbl
+  })
+  set_config(cfg, "data-sources", cfg_dir, digits = NA)
+  # ricu merges the concept dictionaries of all config dirs and fails on a dir
+  # without one, so add an empty dictionary.
+  writeLines("{}", file.path(cfg_dir, "concept-dict.json"))
+  Sys.setenv(RICU_CONFIG_PATH = cfg_dir)
+}
+
 concepts <- read.csv("/bench/common_concepts.csv")$ricu
 out_dir <- "/output/data"
 steps_file <- "/output/steps.csv"

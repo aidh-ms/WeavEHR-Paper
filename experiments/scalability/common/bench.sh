@@ -76,6 +76,13 @@ for dataset in $DATASETS; do
       [[ -f "$RUN_DIR/steps.csv" ]] && tail -n +2 "$RUN_DIR/steps.csv" | sed "s|^|$prefix,|" >> "$STEPS"
       echo "   status=$status wall=${wall_seconds}s peak_memory=$peak_memory_bytes"
 
+      # Record size and listing of the tool outputs before deleting them.
+      {
+        du -sh "$RUN_DIR"/{data,work,tmp}
+        ls -lsahR "$RUN_DIR"/{data,work,tmp}
+      } > "$RUN_DIR/outputs.txt" 2>&1 || true
+      echo "   outputs: $(du -sh "$RUN_DIR/data" 2>/dev/null | cut -f1) in data/, listing: $RUN_DIR/outputs.txt"
+
       # Keep logs and metrics only; tool outputs need tens of GB per run.
       rm -rf "$RUN_DIR/data" "$RUN_DIR/work" "$RUN_DIR/tmp"
     done
