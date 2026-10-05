@@ -47,6 +47,11 @@ for cpus in $CPU_LIMITS; do
   fi
 done
 
+# Mount the OMOP vocabulary only if present: docker would otherwise create
+# the missing host directory (owned by root).
+omop_mount=()
+[[ -d "${OMOP_DIR:-}" ]] && omop_mount=(-v "$OMOP_DIR:/omop:ro")
+
 for dataset in $DATASETS; do
   INPUT_DIR="$(input_dir "$dataset")"
   for mem in $MEM_LIMITS; do
@@ -70,6 +75,7 @@ for dataset in $DATASETS; do
           --user "$(id -u):$(id -g)" \
           -e HOME=/tmp -e DEMO="$DEMO" -e DATASET="$dataset" \
           -v "$INPUT_DIR:/input:ro" \
+          "${omop_mount[@]}" \
           -v "$RUN_DIR:/output" \
           "$IMAGE" > "$RUN_DIR/log.txt" 2>&1 || rc=$?
         oom_killed=$(docker inspect -f '{{.State.OOMKilled}}' "$NAME")

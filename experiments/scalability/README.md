@@ -71,6 +71,11 @@ ricu and reprodICU write files next to their source data (ricu's `.fst`
 import, reprodICU's Parquet copies), so they work on a symlinked copy of the
 input under `/output/work`; that conversion is part of the measured time.
 
+reprodICU also needs the OMOP vocabulary from [Athena](https://athena.ohdsi.org)
+(LOINC and RxNorm; `OMOP_DIR` in `config.env`, mounted read-only at `/omop`).
+Its conversion to Parquet is timed as the step `omop_vocabulary`. Without
+`CONCEPT.csv` in `OMOP_DIR`, `reprodicu/start.sh` skips reprodICU.
+
 reprodICU runs the steps of its `build_all()`. Its magic concepts
 (`build_magic_concepts`) are not run: they set up the paths of all seven
 reprodICU datasets and fail unless every one of them is present.

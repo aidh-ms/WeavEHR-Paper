@@ -6,6 +6,10 @@ gets a symlinked copy of the (read-only) input under /output/work. In demo mode
 reprodICU expects uncompressed CSVs, so the demo files are gunzipped into that
 copy instead. Step timings go to /output/steps.csv.
 
+All extractors also load the OMOP vocabulary (mounted read-only at /omop), which
+reprodICU converts to Parquet next to the CSVs on first use. It gets a symlinked
+copy under /output/work/omop as well, and the conversion is its own timed step.
+
 The magic concepts (build_magic_concepts) are not run: they set up the paths of
 all seven reprodICU datasets and fail unless every one of them is present.
 """
@@ -51,6 +55,7 @@ def gunzip_or_link(src: str, dst: str) -> None:
 
 
 shutil.copytree("/input", SOURCE, copy_function=gunzip_or_link)
+shutil.copytree("/omop", OUT / "work" / "omop", copy_function=os.symlink)
 # MIMIC-IV paths require a notes directory to exist; notes are not built here.
 (OUT / "work" / "mimic-iv-note").mkdir(parents=True)
 
@@ -64,7 +69,7 @@ paths_file.write_text(
         {
             "reprodICU_files_path": f"{OUT}/data/reprodICU/",
             "reprodICU_demo_files_path": f"{OUT}/data/reproDEMO/",
-            "OMOP_vocab_path": f"{OUT}/work/omop/",  # only needed for OMOP export
+            "OMOP_vocab_path": f"{OUT}/work/omop/",
             "mimic4_source_path": SOURCE,
             "mimic4_demo_source_path": SOURCE,
             "mimic4_notes_source_path": f"{OUT}/work/mimic-iv-note/",
@@ -76,9 +81,13 @@ paths_file.write_text(
 
 from reprodICU import build  # noqa: E402
 from reprodICU.config import get_config_manager, reprodICUPaths  # noqa: E402
+from reprodICU.helpers.helper_OMOP import Vocabulary  # noqa: E402
 
 paths = reprodICUPaths(get_config_manager())
 kwargs = {"paths": paths, "datasets": [REPRODICU_DATASET], "demo": DEMO}
+
+with timed("omop_vocabulary"):
+    Vocabulary(paths)
 
 with timed("patient_information"):
     build.build_patient_information(**kwargs, winsorize=False, add_availability=False)
