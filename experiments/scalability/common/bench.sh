@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared benchmark driver, called by every <setting>/<tool>/start.sh.
-# Builds the tool image and runs it REPEATS times per dataset and memory limit
+# Builds the tool image and runs it REPEATS times per dataset, memory and CPU limit
 # (one dataset per container), dropping the page cache before each run.
 # Results are appended to
 #   $OUT_DIR/results.csv  (one row per run: status, wall time, peak memory)
@@ -38,53 +38,64 @@ docker build -t "$IMAGE" -f "$TOOL_DIR/Dockerfile" "$ROOT"
 mkdir -p "$OUT_DIR"
 RESULTS="$OUT_DIR/results.csv"
 STEPS="$OUT_DIR/steps.csv"
-[[ -f "$RESULTS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,run,status,exit_code,wall_seconds,peak_memory_bytes,started_at" > "$RESULTS"
-[[ -f "$STEPS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,run,step,seconds,status" > "$STEPS"
+[[ -f "$RESULTS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,cpu_limit,run,status,exit_code,wall_seconds,peak_memory_bytes,started_at" > "$RESULTS"
+[[ -f "$STEPS" ]] || echo "setting,tool,mode,dataset,mem_limit_gb,cpu_limit,run,step,seconds,status" > "$STEPS"
+
+for cpus in $CPU_LIMITS; do
+  if (( cpus > $(nproc) )); then
+    echo "CPU limit $cpus exceeds the $(nproc) available cores" >&2; exit 1
+  fi
+done
 
 for dataset in $DATASETS; do
   INPUT_DIR="$(input_dir "$dataset")"
   for mem in $MEM_LIMITS; do
-    for run in $(seq 1 "$REPEATS"); do
-      RUN_DIR="$OUT_DIR/$MODE/$SETTING/$TOOL/$dataset/${mem}g/run$run"
-      NAME="$IMAGE-$dataset-${mem}g-run$run"
-      rm -rf "$RUN_DIR" && mkdir -p "$RUN_DIR"
-      docker rm -f "$NAME" > /dev/null 2>&1 || true
-      drop_caches
+    for cpus in $CPU_LIMITS; do
+      for run in $(seq 1 "$REPEATS"); do
+        RUN_DIR="$OUT_DIR/$MODE/$SETTING/$TOOL/$dataset/${mem}g-${cpus}cpu/run$run"
+        NAME="$IMAGE-$dataset-${mem}g-${cpus}cpu-run$run"
+        rm -rf "$RUN_DIR" && mkdir -p "$RUN_DIR"
+        docker rm -f "$NAME" > /dev/null 2>&1 || true
+        drop_caches
 
-      started_at=$(date -Iseconds)
-      echo "-- $dataset ${mem}g run $run/$REPEATS ($started_at), input: $INPUT_DIR, log: $RUN_DIR/log.txt"
-      rc=0
-      docker run --name "$NAME" \
-        --memory "${mem}g" --memory-swap "${mem}g" \
-        --cgroupns private --network none \
-        --user "$(id -u):$(id -g)" \
-        -e HOME=/tmp -e DEMO="$DEMO" -e DATASET="$dataset" \
-        -v "$INPUT_DIR:/input:ro" \
-        -v "$RUN_DIR:/output" \
-        "$IMAGE" > "$RUN_DIR/log.txt" 2>&1 || rc=$?
-      oom_killed=$(docker inspect -f '{{.State.OOMKilled}}' "$NAME")
-      docker rm "$NAME" > /dev/null
+        started_at=$(date -Iseconds)
+        echo "-- $dataset ${mem}g ${cpus}cpu run $run/$REPEATS ($started_at), input: $INPUT_DIR, log: $RUN_DIR/log.txt"
+        rc=0
+        # --cpuset-cpus rather than --cpus: thread pools (data.table, Polars, ...)
+        # size themselves from the visible cores, which a cpuset restricts.
+        docker run --name "$NAME" \
+          --memory "${mem}g" --memory-swap "${mem}g" \
+          --cpuset-cpus "0-$((cpus - 1))" \
+          --cgroupns private --network none \
+          --user "$(id -u):$(id -g)" \
+          -e HOME=/tmp -e DEMO="$DEMO" -e DATASET="$dataset" \
+          -v "$INPUT_DIR:/input:ro" \
+          -v "$RUN_DIR:/output" \
+          "$IMAGE" > "$RUN_DIR/log.txt" 2>&1 || rc=$?
+        oom_killed=$(docker inspect -f '{{.State.OOMKilled}}' "$NAME")
+        docker rm "$NAME" > /dev/null
 
-      # Defaults in case the container died before writing its metrics.
-      status=failed exit_code=$rc wall_seconds=NA
-      peak_memory_bytes=NA
-      [[ -f "$RUN_DIR/metrics.env" ]] && source "$RUN_DIR/metrics.env"
-      [[ "$oom_killed" == true ]] && status=oom
+        # Defaults in case the container died before writing its metrics.
+        status=failed exit_code=$rc wall_seconds=NA
+        peak_memory_bytes=NA
+        [[ -f "$RUN_DIR/metrics.env" ]] && source "$RUN_DIR/metrics.env"
+        [[ "$oom_killed" == true ]] && status=oom
 
-      prefix="$SETTING,$TOOL,$MODE,$dataset,$mem,$run"
-      echo "$prefix,$status,$exit_code,$wall_seconds,$peak_memory_bytes,$started_at" >> "$RESULTS"
-      [[ -f "$RUN_DIR/steps.csv" ]] && tail -n +2 "$RUN_DIR/steps.csv" | sed "s|^|$prefix,|" >> "$STEPS"
-      echo "   status=$status wall=${wall_seconds}s peak_memory=$peak_memory_bytes"
+        prefix="$SETTING,$TOOL,$MODE,$dataset,$mem,$cpus,$run"
+        echo "$prefix,$status,$exit_code,$wall_seconds,$peak_memory_bytes,$started_at" >> "$RESULTS"
+        [[ -f "$RUN_DIR/steps.csv" ]] && tail -n +2 "$RUN_DIR/steps.csv" | sed "s|^|$prefix,|" >> "$STEPS"
+        echo "   status=$status wall=${wall_seconds}s peak_memory=$peak_memory_bytes"
 
-      # Record size and listing of the tool outputs before deleting them.
-      {
-        du -sh "$RUN_DIR"/{data,work,tmp}
-        ls -lsahR "$RUN_DIR"/{data,work,tmp}
-      } > "$RUN_DIR/outputs.txt" 2>&1 || true
-      echo "   outputs: $(du -sh "$RUN_DIR/data" 2>/dev/null | cut -f1) in data/, listing: $RUN_DIR/outputs.txt"
+        # Record size and listing of the tool outputs before deleting them.
+        {
+          du -sh "$RUN_DIR"/{data,work,tmp}
+          ls -lsahR "$RUN_DIR"/{data,work,tmp}
+        } > "$RUN_DIR/outputs.txt" 2>&1 || true
+        echo "   outputs: $(du -sh "$RUN_DIR/data" 2>/dev/null | cut -f1) in data/, listing: $RUN_DIR/outputs.txt"
 
-      # Keep logs and metrics only; tool outputs need tens of GB per run.
-      rm -rf "$RUN_DIR/data" "$RUN_DIR/work" "$RUN_DIR/tmp"
+        # Keep logs and metrics only; tool outputs need tens of GB per run.
+        rm -rf "$RUN_DIR/data" "$RUN_DIR/work" "$RUN_DIR/tmp"
+      done
     done
   done
 done

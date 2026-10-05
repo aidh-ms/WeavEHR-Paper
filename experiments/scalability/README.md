@@ -11,7 +11,8 @@ encounters in practice. Because the tools differ in execution model, we report
 timings for intermediate steps as well as end-to-end. Each tool was configured
 according to its own documentation for optimal performance, using the latest
 stable release at the time of evaluation. Each run was executed inside a Docker
-container with available memory limited to 16, 32 and 48\,GB. We report median time
+container limited to 8 CPU cores and with available memory limited to 16, 32 and
+48\,GB. We report median time
 and median peak memory at the container level, together with the observed range,
 across five repeated runs. Input data were stored on local NVMe storage and the
 page cache was cleared before each run. Runs that failed to complete within the
@@ -20,7 +21,7 @@ memory limit were recorded as such.
 ## Running the benchmark
 
 ```
-config.env                   # data/output paths, datasets, memory limits, repeats, demo switch
+config.env                   # data/output paths, datasets, memory/CPU limits, repeats, demo switch
 run_all.sh                   # runs all five tool/setting combinations
 run_common_concepts.sh       # runs setting 1 only (weavehr, ricu)
 run_full_catalogue.sh        # runs setting 2 only (weavehr, ricu, reprodicu)
@@ -49,13 +50,16 @@ its own container runs, so a tool never processes both at once. Per run, `bench.
 
 - drops the host page cache with a privileged throwaway container
   (`echo 3 > /proc/sys/vm/drop_caches`),
-- starts the tool with `--memory=<N>g --memory-swap=<N>g` (no swap) and
-  `--network none`, with the one dataset mounted read-only at `/input` and a fresh
-  run directory mounted at `/output`,
+- starts the tool with `--memory=<N>g --memory-swap=<N>g` (no swap),
+  `--cpuset-cpus=0-<C-1>` (`CPU_LIMITS` in `config.env`) and `--network none`,
+  with the one dataset mounted read-only at `/input` and a fresh run directory
+  mounted at `/output`. A cpuset is used rather than a `--cpus` quota so that
+  the tools' thread pools (e.g. data.table's `setDTthreads(0L)`) only see the
+  allowed cores,
 - records status (`ok`/`oom`/`failed`), wall time and peak memory in
   `$OUT_DIR/results.csv`, and the timings of the intermediate steps in
   `$OUT_DIR/steps.csv`. Logs stay in
-  `$OUT_DIR/<mode>/<setting>/<tool>/<dataset>/<mem>g/run<i>/`.
+  `$OUT_DIR/<mode>/<setting>/<tool>/<dataset>/<mem>g-<cpus>cpu/run<i>/`.
   Tool outputs are deleted after each run; their sizes and a recursive file
   listing are kept in `outputs.txt` in the run directory.
 
