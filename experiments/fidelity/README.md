@@ -70,6 +70,7 @@ for independent inspection.
 
 ## Sources
 
-The `<1%` mean-relative-difference threshold and the comparison methodology
-itself are the author's own, established in
+The `<1%` mean-relative-difference threshold is this validation task's
+agreed criterion; the comparison methodology applying it is documented, with
+full results, in
 [georginapetr/openicu-yaib-integration](https://github.com/georginapetr/openicu-yaib-integration#ricu-comparison-eicu-crd).

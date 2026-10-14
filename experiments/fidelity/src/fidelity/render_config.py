@@ -8,8 +8,8 @@ environment-variable interpolation -- so the dataset path can't be a
 renders the real, gitignored `extraction.yml` from it.
 """
 
-from config import EICU_CRD_RAW_PATH
-from paths import CONFIG_DIR
+from fidelity.config import EICU_CRD_RAW_PATH
+from fidelity.paths import CONFIG_DIR
 
 PLACEHOLDER = "/path/to/physionet.org/files/eicu-crd/2.0"
 
