@@ -170,3 +170,4 @@ experiments/*/output/
 experiments/*/results/
 experiments/*/logs/
 experiments/*/run_summary.json
+experiments/*/*_training_logs*/
