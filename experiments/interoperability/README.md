@@ -119,26 +119,31 @@ metrics) are written to `results/`, `aki_training_logs/`, and
 
 | Task | Model | AUROC | AUPRC |
 |---|---|---|---|
-| AKI | XGBoost | 0.802 (95% CI 0.801-0.803) | 0.233 (95% CI 0.230-0.236) |
-| Mortality24 | XGBoost | 0.843 (95% CI 0.842-0.845) | 0.318 (95% CI 0.314-0.322) |
+| AKI | XGBoost | 0.801 (95% CI 0.800-0.801) | 0.234 (95% CI 0.233-0.235) |
+| Mortality24 | XGBoost | 0.840 (95% CI 0.838-0.841) | 0.313 (95% CI 0.309-0.318) |
 | Mortality24 | Transformer (GPU) | 0.836 (95% CI 0.832-0.841) | 0.305 (95% CI 0.297-0.313) |
-| Mortality24 | Logistic Regression | 0.466 (95% CI 0.464-0.468) | 0.050 (95% CI 0.049-0.050) |
+| Mortality24 | Logistic Regression | 0.820 (95% CI 0.818-0.822) | 0.287 (95% CI 0.283-0.291) |
 
 AKI/XGBoost's result is independently re-verified: `verify_train_aki_xgboost.py`
 recomputes mean/CI directly from the 25 raw per-fold metric files using
 YAIB's own aggregation formula and confirms an exact match against YAIB's
 own reported aggregate.
 
-**Logistic Regression's result is not a new finding or a porting defect.**
-It reproduces a known, already-documented anomaly from the author's prior
-OpenICU-based validation
-([aidh-ms/WeavEHR#13](https://github.com/aidh-ms/WeavEHR/issues/13)):
-AUROC at/below chance, with near-identical metrics across all 5 folds
-within a repetition (confirmed again here: AUC 0.4594 in every one of
-repetition 0's 5 folds) — consistent with a bug in YAIB's own LR/
-class-weighting handling, not in this pipeline's cohort or training
-invocation. Documented there as investigated and not pursued further;
-left as-is here for the same reason, not reinvestigated in this port.
+**Logistic Regression's result required a real fix, not a documented
+workaround.** `YAIB-clean` was initially run against a stale local clone of
+`rvandewater/YAIB`, missing a correctness fix merged upstream on 7/10/2026
+(`icu_benchmarks/data/loader.py`): the pre-fix code fed `stay_id` itself
+into the model as a literal input feature, and relied on an unguaranteed
+Polars `group_by` row order to keep features aligned with labels. All four
+training runs were re-done after updating to the current upstream commit.
+AKI/XGBoost and Mortality24/XGBoost moved negligibly; Mortality24/Logistic
+Regression went from an apparent at-chance result (AUROC ~0.47, matching
+the pattern described as an unresolved anomaly in the author's prior
+OpenICU-based validation,
+[aidh-ms/WeavEHR#13](https://github.com/aidh-ms/WeavEHR/issues/13)) to the
+legitimate result above -- strong evidence that this same upstream bug,
+not a separate unfixable defect, was the actual cause of that earlier
+anomaly.
 
 ## Sources
 
