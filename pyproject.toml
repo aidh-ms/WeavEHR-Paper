@@ -19,6 +19,8 @@ classifiers = [
 requires-python = ">=3.14"
 dependencies = [
     "weavehr>=0.0.1",
+    "openicu-yaib @ git+https://github.com/georginapetr/openicu-yaib.git@fad153bb3c31cedb63765ce44dec10250d3699e6",
+    "matplotlib>=3.9",
 ]
 
 [project.urls]
@@ -31,6 +33,10 @@ documentation = "https://github.com/aidh-ms/WeavEHR-Paper/wiki"  # TODO
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# openicu-yaib (fidelity experiment) is a git dependency, not on PyPI.
+allow-direct-references = true
 
 [dependency-groups]
 dev = [
@@ -47,6 +53,13 @@ dev = [
 [tool.uv]
 exclude-newer = "P7D"
 exclude-newer-package = { weavehr = false }
+
+[tool.ty.environment]
+# Each experiment's own src/ is a self-contained script directory, run with
+# PYTHONPATH=<experiment>/src (see its .sbatch files) rather than imported
+# as part of the top-level src/ package -- registered here too so `ty check .`
+# can resolve its internal imports the same way.
+extra-paths = ["experiments/fidelity/src"]
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py"]
