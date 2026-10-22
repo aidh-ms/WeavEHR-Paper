@@ -60,9 +60,15 @@ written to `results/`.
 ## Results (eICU-CRD)
 
 **48/48 shared concepts land under the <1% mean relative difference
-threshold** (largest: `mg`, 0.49%). Of 200,859 WeavEHR stays, 196,340 have a
-matching RICU stay (RICU's own internal filtering excludes the remaining
-4,519 — not a disagreement, just nothing to compare against for those). Full
+threshold** (largest: `mg`, 0.49%). RICU's own ICU-stay cohort for eICU-CRD
+(`stay_windows()`) includes all 200,859 stays, identical to WeavEHR's; of
+these, 196,340 have at least one recorded value for the compared concepts in
+RICU's exported reference data. The remaining 4,519 have no recorded
+measurement for any of the 48 compared concepts within the 7-day comparison
+window in RICU's own data — a data-sparsity effect, not a cohort exclusion by
+RICU, nor a disagreement between the two pipelines (verified by reproducing
+the comparison's stay-overlap computation directly against RICU's cached
+export: exact match, 196,340/4,519). Full
 per-concept table and plot: `results/ricu_comparison_eicu-crd/value_diff.csv`
 and `results/ricu_comparison_eicu-crd_per_concept.png`. All 10 underlying
 report tables are saved as CSV+JSON in `results/ricu_comparison_eicu-crd/`
