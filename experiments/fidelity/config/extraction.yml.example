@@ -1,0 +1,8 @@
+name: Extraction
+version: 1.0.0
+
+config:
+  data:
+    - name: eicu-crd
+      version: "2.0"
+      path: /path/to/physionet.org/files/eicu-crd/2.0

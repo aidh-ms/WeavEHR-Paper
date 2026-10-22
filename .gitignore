@@ -160,3 +160,13 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .devcontainer/local.env
+
+# Per-experiment local config and generated artifacts (machine-specific
+# paths, pipeline output, results) -- see each experiment's .env.example.
+experiments/*/.env
+experiments/*/config/*.yml
+!experiments/*/config/concept.yml
+experiments/*/output/
+experiments/*/results/
+experiments/*/logs/
+experiments/*/run_summary.json
