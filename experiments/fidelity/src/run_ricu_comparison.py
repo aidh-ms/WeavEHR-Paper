@@ -31,8 +31,8 @@ from openicu_yaib import (
     resolve_openicu_workspace,
 )
 
-from config import CONDA_BIN, OPENICU_YAIB_REPO_ROOT, RICU_CONDA_ENV, RICU_DATA_PATH
-from paths import PROJECT_PATH, RESULTS_DIR
+from fidelity.config import CONDA_BIN, OPENICU_YAIB_REPO_ROOT, RICU_CONDA_ENV, RICU_DATA_PATH
+from fidelity.paths import PROJECT_PATH, RESULTS_DIR
 
 DATASET = "eicu-crd"
 MAX_HOURS = 7 * 24
