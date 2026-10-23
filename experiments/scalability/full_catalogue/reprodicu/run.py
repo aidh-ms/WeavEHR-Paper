@@ -79,9 +79,9 @@ paths_file.write_text(
     )
 )
 
-from reprodICU import build  # noqa: E402
-from reprodICU.config import get_config_manager, reprodICUPaths  # noqa: E402
-from reprodICU.helpers.helper_OMOP import Vocabulary  # noqa: E402
+from reprodICU import build  # noqa: E402  # ty: ignore[unresolved-import]
+from reprodICU.config import get_config_manager, reprodICUPaths  # noqa: E402  # ty: ignore[unresolved-import]
+from reprodICU.helpers.helper_OMOP import Vocabulary  # noqa: E402  # ty: ignore[unresolved-import]
 
 paths = reprodICUPaths(get_config_manager())
 kwargs = {"paths": paths, "datasets": [REPRODICU_DATASET], "demo": DEMO}
