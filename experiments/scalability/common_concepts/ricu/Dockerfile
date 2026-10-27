@@ -2,11 +2,14 @@
 FROM rocker/r-ver:4.6.1
 
 ARG RICU_VERSION=0.6.3
+# Dated CRAN snapshot (Posit Package Manager) instead of rocker's "latest", so
+# a rebuild installs the same versions of ricu, arrow, units and their dependencies.
+ARG CRAN_SNAPSHOT=https://p3m.dev/cran/__linux__/noble/2026-10-12
 # units is only suggested by ricu but needed for its unit-converting concepts.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libudunits2-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN install2.r --error --skipinstalled ricu arrow units \
+RUN install2.r --error --skipinstalled --repos "${CRAN_SNAPSHOT}" ricu arrow units \
     && Rscript -e "stopifnot(packageVersion('ricu') == '${RICU_VERSION}')"
 
 # ricu imports the raw CSVs into its data dir, so it gets a symlinked copy of

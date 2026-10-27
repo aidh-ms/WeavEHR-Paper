@@ -1,13 +1,12 @@
 # Build context: experiments/scalability
 FROM python:3.13.16-slim-trixie
 
-# reprodICU has no releases; pin the commit that was evaluated.
-ARG REPRODICU_COMMIT=c5a017f3e0a71753196f945daebfe177e3adf573
 COPY --from=ghcr.io/astral-sh/uv:0.11.21 /uv /bin/
-# Extra packages are imported by reprodICU but not declared as dependencies.
-RUN uv pip install --system --no-cache \
-    "reprodICU @ https://github.com/CUB-CORR/reprodICU/archive/${REPRODICU_COMMIT}.tar.gz" \
-    pyyaml numpy tqdm scikit-learn matplotlib seaborn altair
+# reprodICU at the evaluated commit, the packages it imports without declaring
+# them, and all dependencies, pinned with hashes (compiled from requirements.in;
+# see the file header to regenerate it).
+COPY full_catalogue/reprodicu/requirements.txt /tmp/requirements.txt
+RUN uv pip install --system --no-cache --require-hashes -r /tmp/requirements.txt
 
 ENV PYTHONUNBUFFERED=1 \
     TMPDIR=/output/tmp \

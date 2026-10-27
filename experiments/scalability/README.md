@@ -28,11 +28,25 @@ run_full_catalogue.sh        # runs setting 2 only (weavehr, ricu, reprodicu)
 common/bench.sh              # shared driver (build, drop caches, docker run, collect)
 common/measure.sh            # container entrypoint (wall time + cgroup memory)
 common/common_concepts.csv   # common concept set (ricu <-> WeavEHR names)
+common/weavehr-requirements.txt              # pinned weavehr + dependencies (from uv.lock)
 common_concepts/{weavehr,ricu}/              # setting 1: common concept set
 full_catalogue/{weavehr,ricu,reprodicu}/     # setting 2: full native catalogue
+full_catalogue/reprodicu/requirements.{in,txt}  # pinned reprodICU + dependencies
 ```
 
 Each tool folder has a `Dockerfile`, the tool's run script and a `start.sh`.
+
+All package versions are pinned, so rebuilding an image installs the same
+software:
+
+- WeavEHR: `common/weavehr-requirements.txt`, exported with hashes from the
+  repository's `uv.lock`. Regenerate it with the command in its header after
+  updating the lock.
+- reprodICU: `full_catalogue/reprodicu/requirements.txt`, compiled with hashes
+  from `requirements.in` (the evaluated commit plus the packages reprodICU
+  imports without declaring them). The command is in its header.
+- ricu: installed from a dated CRAN snapshot (`CRAN_SNAPSHOT` in the ricu
+  Dockerfiles) instead of rocker's `latest`.
 Set `DATA_DIR` and `OUT_DIR` in `config.env`, then run a single tool or everything:
 
 ```sh

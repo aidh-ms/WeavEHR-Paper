@@ -1,0 +1,11 @@
+# Input for requirements.txt (see its header for the uv command).
+# reprodICU has no releases; pin the commit that was evaluated.
+reprodICU @ https://github.com/CUB-CORR/reprodICU/archive/c5a017f3e0a71753196f945daebfe177e3adf573.tar.gz
+# Imported by reprodICU but not declared as dependencies.
+pyyaml
+numpy
+tqdm
+scikit-learn
+matplotlib
+seaborn
+altair

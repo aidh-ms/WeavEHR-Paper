@@ -1,9 +1,11 @@
 # Build context: experiments/scalability
 FROM python:3.14.8-slim-trixie
 
-ARG WEAVEHR_VERSION=0.0.1
 COPY --from=ghcr.io/astral-sh/uv:0.11.21 /uv /bin/
-RUN uv pip install --system --no-cache "weavehr==${WEAVEHR_VERSION}"
+# weavehr and all its dependencies, pinned with hashes (exported from the
+# repository's uv.lock; see the file header to regenerate it).
+COPY common/weavehr-requirements.txt /tmp/requirements.txt
+RUN uv pip install --system --no-cache --require-hashes -r /tmp/requirements.txt
 
 ENV PYTHONUNBUFFERED=1 \
     TMPDIR=/output/tmp \
