@@ -17,15 +17,23 @@ src <- c("mimic-iv" = "miiv", eicu = if (demo) "eicu_demo" else "eicu")[[
   Sys.getenv("DATASET")
 ]]
 
-if (demo && src == "miiv") {
+if (src == "miiv") {
   cfg_dir <- "/output/work/ricu-config"
   cfg <- get_config("data-sources")
   cfg <- Filter(function(x) x$name == "miiv", cfg)
-  cfg[[1L]]$tables <- lapply(cfg[[1L]]$tables, function(tbl) {
+  
+  if (demo) {
+    cfg[[1L]]$tables <- lapply(cfg[[1L]]$tables, function(tbl) {
     tbl$partitioning <- NULL
     tbl$num_rows <- NULL
     tbl
   })
+  } else {
+    # Not required for any ricu concept
+    cfg[[1L]]$tables$emar_detail <- NULL
+    cfg[[1L]]$tables$emar <- NULL
+  }
+  
   set_config(cfg, "data-sources", cfg_dir, digits = NA)
   # ricu merges the concept dictionaries of all config dirs and fails on a dir
   # without one, so add an empty dictionary.
