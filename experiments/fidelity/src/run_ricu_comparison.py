@@ -22,6 +22,7 @@ installed.
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from openicu_yaib import (
@@ -56,6 +57,32 @@ RICU_CONCEPT_DICT = (
 
 assert RICU_CONCEPT_DICT.exists(), f"ricu's shipped concept dict not found at {RICU_CONCEPT_DICT}"
 
+
+def _newest_mtime(path: Path) -> float:
+    """mtime of `path`, or of its most recently modified file if `path` is a directory."""
+    if path.is_file():
+        return path.stat().st_mtime
+    return max((p.stat().st_mtime for p in path.rglob("*") if p.is_file()), default=0.0)
+
+
+def is_stale(output_path: Path, *inputs: Path) -> bool:
+    """True if `output_path` doesn't exist, or any of `inputs` was modified more recently.
+
+    A cached output reused purely because the file exists, with no check against the
+    inputs that produced it, is a reproducibility gap: if an input changes (e.g. WeavEHR
+    re-extracts its concepts after a bugfix, or the ricu export script itself is edited)
+    after the cache was written, the stale cache would silently be reused instead of being
+    regenerated. This is not a guarantee of correctness (two different runs can share an
+    mtime within filesystem timestamp resolution), but it catches the realistic case of
+    "I changed something upstream and reran this script," which plain existence-checking
+    does not.
+    """
+    if not output_path.exists():
+        return True
+    output_mtime = output_path.stat().st_mtime
+    return any(_newest_mtime(p) > output_mtime for p in inputs if p.exists())
+
+
 WORKSPACE = resolve_openicu_workspace(PROJECT_PATH)
 CONCEPT_ROOT = concept_root_from_output(PROJECT_PATH)
 DATASET_OUTPUT = WORKSPACE / "yaib" / DATASET
@@ -69,12 +96,17 @@ print(f"dataset_output        = {DATASET_OUTPUT}")
 # --- Step A: export RICU's reference values for the same concepts ----------
 # Both R exports are the slow part (ricu loading concepts across the full
 # dataset, including the huge vitalPeriodic/nurseCharting sources) -- skipped
-# if a prior run already produced them, so a script bug further down never
-# costs a re-run of the expensive part.
+# if a prior run already produced them *and* nothing they depend on (the
+# export script itself, the raw ricu data) has changed since (see
+# is_stale()), so a script bug further down never costs a re-run of the
+# expensive part, while a real upstream change still triggers one.
 ricu_dynamic_path = DATASET_OUTPUT / "ricu_dynamic_vars_eicu.parquet"
 ricu_stay_windows_path = DATASET_OUTPUT / "ricu_stay_windows_eicu.parquet"
+export_script_path = OPENICU_YAIB_REPO_ROOT / "scripts" / "datasets" / "export_ricu_eicu-crd.R"
 
-if ricu_dynamic_path.exists() and ricu_stay_windows_path.exists():
+if not is_stale(ricu_dynamic_path, export_script_path, RICU_DATA_PATH) and not is_stale(
+    ricu_stay_windows_path, export_script_path, RICU_DATA_PATH
+):
     print(f"\n--- Step A: already done, reusing {ricu_dynamic_path} and {ricu_stay_windows_path} ---")
 else:
     env = os.environ.copy()
@@ -95,7 +127,7 @@ else:
 
 # --- Step B: WeavEHR wide table restricted to the first 7 days -------------
 weavehr_7d_path = DATASET_OUTPUT / "weavehr_dyn_168h.parquet"
-if weavehr_7d_path.exists():
+if not is_stale(weavehr_7d_path, CONCEPT_ROOT, RICU_CONCEPT_DICT):
     print(f"\n--- Step B: already done, reusing {weavehr_7d_path} ---")
 
     class _CachedResult:
@@ -164,8 +196,8 @@ fig, ax = plt.subplots(figsize=(9, max(4, 0.3 * vd.height)))
 colors = ["tab:red" if v >= 0.01 else "tab:blue" for v in vd["mean_rel_diff"].fill_null(0)]
 ax.barh(vd["concept"], vd["mean_rel_diff"].fill_null(0), color=colors)
 ax.axvline(0.01, color="black", linestyle="--", linewidth=1, label="1% threshold")
-ax.set_xlabel("mean relative difference (WeavEHR vs. RICU)")
-ax.set_title(f"WeavEHR vs. RICU per-concept agreement, {DATASET}")
+ax.set_xlabel("mean relative difference (WeavEHR vs. ricu)")
+ax.set_title(f"WeavEHR vs. ricu per-concept agreement, {DATASET}")
 ax.legend()
 fig.tight_layout()
 plot_path = RESULTS_DIR / "ricu_comparison_eicu-crd_per_concept.png"

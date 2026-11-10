@@ -170,3 +170,16 @@ experiments/*/output/
 experiments/*/results/
 experiments/*/logs/
 experiments/*/run_summary.json
+experiments/*/*_training_logs*/
+
+# Personal working draft, never for commit/push -- local-only scratch notes
+# for the shared Prism paper draft.
+/WeavEHR_paper_draft_georgina.md
+/WeavEHR_paper_draft_georgina.docx
+
+# Personal GitHub status-tracking notes, never for commit/push -- local-only.
+/GitHub_Status_Update_*.md
+/GitHub_Status_Update_*.docx
+
+# Personal build tool for the local-only paper draft above -- never commit/push.
+/build_weavehr_paper_docx.py
