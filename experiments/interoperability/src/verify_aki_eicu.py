@@ -23,7 +23,8 @@ Checks performed, and why each is here:
    hour against the real LOS from the raw eICU-CRD file directly.
 3. Label spot checks, both directions: for a sample of label=1 rows,
    independently recompute the true AKI onset hour and confirm
-   (onset > t) and (onset <= t + 6); for a sample of label=0 rows,
+   abs(onset - t) <= 6 (symmetric window, matching aki.R's
+   outcome_window(window = c(6L, 6L))); for a sample of label=0 rows,
    confirm that condition is genuinely False.
 4. Exclusion-6 (hospital AKI prevalence), both directions: find one real
    hospital with zero observed AKI cases and confirm it would be
@@ -78,9 +79,10 @@ meas_stats = (
 )
 onset = aki_concepts.filter(pl.col("aki") >= 1).group_by("stay_id").agg(pl.col("time").min().alias("onset_hour"))
 baseline = (
-    dyn.filter((pl.col("time") >= 0) & (pl.col("time") < 24) & pl.col("crea").is_not_null())
-    .group_by("stay_id")
-    .agg(pl.col("crea").min().alias("baseline_crea"))
+    dyn.filter((pl.col("time") >= 0) & pl.col("crea").is_not_null())
+    .sort("stay_id", "time")
+    .group_by("stay_id", maintain_order=True)
+    .agg(pl.col("crea").first().alias("baseline_crea"))
 )
 
 cohort = (
@@ -170,14 +172,14 @@ pos_sample = outc_df.filter(pl.col("label") == 1).sample(5, seed=11)
 pos_checks = []
 for stay_id, t, _ in pos_sample.iter_rows():
     onset_h = onset_hour_for(stay_id)
-    ok = onset_h is not None and (onset_h > t) and (onset_h <= t + ONSET_WINDOW)
+    ok = onset_h is not None and abs(onset_h - t) <= ONSET_WINDOW
     pos_checks.append({"stay_id": stay_id, "t": t, "onset_hour": onset_h, "correct": ok})
 
 neg_sample = outc_df.filter(pl.col("label") == 0).sample(5, seed=11)
 neg_checks = []
 for stay_id, t, _ in neg_sample.iter_rows():
     onset_h = onset_hour_for(stay_id)
-    should_be_false = onset_h is not None and (onset_h > t) and (onset_h <= t + ONSET_WINDOW)
+    should_be_false = onset_h is not None and abs(onset_h - t) <= ONSET_WINDOW
     neg_checks.append({"stay_id": stay_id, "t": t, "onset_hour": onset_h, "correctly_negative": not should_be_false})
 
 results["label_spot_checks"] = {"positive_samples": pos_checks, "negative_samples": neg_checks}
@@ -203,7 +205,7 @@ results["exclusion_6_spot_check"] = {
 
 # --- Check 5: a previously-mishandled missing-data case is now retained ----
 no_crea_stays = (
-    dyn.filter((pl.col("time") >= 0) & (pl.col("time") < 24))
+    dyn.filter(pl.col("time") >= 0)
     .group_by("stay_id")
     .agg(pl.col("crea").is_not_null().sum().alias("n_crea"))
     .filter(pl.col("n_crea") == 0)
@@ -212,7 +214,7 @@ no_crea_stays = (
 )
 retained_no_crea = outc_df.select("stay_id").unique().join(no_crea_stays, on="stay_id", how="inner")
 results["missing_baseline_crea_retained_example"] = {
-    "n_retained_stays_with_zero_first24h_creatinine": retained_no_crea.height,
+    "n_retained_stays_with_zero_in_icu_creatinine": retained_no_crea.height,
     "example_stay_id": retained_no_crea["stay_id"][0] if retained_no_crea.height else None,
 }
 assert retained_no_crea.height > 0, (

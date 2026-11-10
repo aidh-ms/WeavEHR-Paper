@@ -6,17 +6,18 @@ already-verified building blocks: the corrected KDIGO concepts
 0-3 stages), hospital_id, and the extraction-chain dynamic/static tables
 (raw creatinine is already column "crea" in the dynamic table).
 
-Label semantics -- stated explicitly since this is the one place real
-ambiguity exists without ricu's own source in hand: "predict AKI onset
-within the next 6 hours", matching the YAIB paper's own stated task
-definition (Table: "AKI ... Hourly (within 6H)"). For each stay, onset
-is the first hour where the corrected `aki` concept is >= 1. The
-observation window runs from hour 0 to min(onset_hour + 6, 168, the
-stay's actual length of stay) if an onset occurs, else 0 to
-min(168, LOS) if it never does. label(t) = 1 iff an onset occurs in
-(t, t+6], else 0, for every hour t in that window. This is a stated
-interpretation, not verified against ricu's own R code -- flagged
-plainly, not asserted as certain.
+Label semantics -- confirmed directly against YAIB-cohorts' own R source
+(R/aki.R and R/src/sequential.R, both on the official upstream
+github.com/rvandewater/YAIB-cohorts), not inferred from prose: the raw
+per-hour onset indicator is passed through `outcome_window(window =
+c(6L, 6L))`, which smears the onset flag symmetrically, 6 hours
+backward and 6 hours forward, around each stay's onset hour -- not a
+forward-only "predict within the next 6 hours" horizon as earlier
+assumed here. For each stay, onset is the first hour where the
+corrected `aki` concept is >= 1. The observation window runs from hour
+0 to min(onset_hour + 6, 168, the stay's actual length of stay) if an
+onset occurs, else 0 to min(168, LOS) if it never does. label(t) = 1
+iff abs(onset_hour - t) <= 6, else 0, for every hour t in that window.
 
 The observation window must also be bounded by each stay's own actual
 LOS, not just the onset/168h caps -- otherwise stays get outcome rows
@@ -34,9 +35,14 @@ Cohort exclusions (5 base + 3 AKI-specific, from aki.R):
   6. Low AKI prevalence at the stay's hospital (0 AKI cases across all
      that hospital's stays) -- eICU-CRD only, per aki.R
   7. AKI onset before 6h in the ICU
-  8. Baseline creatinine > 4 (chronic kidney disease gate): the minimum
-     creatinine observed in the first ICU day, excluded if that minimum
-     itself exceeds 4 mg/dL
+  8. Baseline creatinine > 4 (chronic kidney disease gate): aki.R defines
+     this as the cumulative minimum creatinine across pre-ICU
+     measurements and the first in-ICU measurement. This dataset has no
+     pre-ICU (time < 0) creatinine rows at all (confirmed empirically:
+     0 rows with time < 0 in openicu_dyn_all.parquet), so that cumulative
+     minimum reduces, on this data, to simply the stay's first recorded
+     in-ICU creatinine value -- not a minimum over the first 24 ICU
+     hours, as a previous version of this script computed.
 
 Every exclusion condition is explicitly null-safe (`.fill_null(False)`):
 a stay whose value for a given criterion is missing cannot be confirmed
@@ -96,11 +102,14 @@ meas_stats = measurement_hours.group_by("stay_id").agg(
 # --- Onset hour per stay: first hour with corrected aki >= 1 ---------------
 onset = aki_concepts.filter(pl.col("aki") >= 1).group_by("stay_id").agg(pl.col("time").min().alias("onset_hour"))
 
-# --- Baseline creatinine: min creatinine in the first ICU day (0-24h) ------
+# --- Baseline creatinine: first in-ICU creatinine value (no pre-ICU rows ---
+# exist in this dataset, so aki.R's cummin over pre-ICU + first-ICU reduces
+# to just the first in-ICU value; see module docstring, exclusion 8)
 baseline_crea = (
-    dyn.filter((pl.col("time") >= 0) & (pl.col("time") < 24) & pl.col("crea").is_not_null())
-    .group_by("stay_id")
-    .agg(pl.col("crea").min().alias("baseline_crea"))
+    dyn.filter((pl.col("time") >= 0) & pl.col("crea").is_not_null())
+    .sort("stay_id", "time")
+    .group_by("stay_id", maintain_order=True)
+    .agg(pl.col("crea").first().alias("baseline_crea"))
 )
 
 cohort = (
@@ -162,7 +171,8 @@ obs_end = (
     .select("stay_id", "onset_hour", "obs_end")
 )
 
-# Build the hourly grid per stay and label(t) = onset occurs in (t, t+6]
+# Build the hourly grid per stay and label(t) = 1 iff abs(onset_hour - t) <= 6
+# (symmetric window, matching aki.R's outcome_window(window = c(6L, 6L)))
 grid = obs_end.select(
     "stay_id",
     pl.int_ranges(0, pl.col("obs_end").cast(pl.Int64) + 1).alias("time"),
@@ -171,9 +181,7 @@ grid = obs_end.select(
 
 outc = grid.with_columns(
     pl.when(
-        pl.col("onset_hour").is_not_null()
-        & (pl.col("onset_hour") > pl.col("time"))
-        & (pl.col("onset_hour") <= pl.col("time") + ONSET_WINDOW)
+        pl.col("onset_hour").is_not_null() & ((pl.col("onset_hour") - pl.col("time")).abs() <= ONSET_WINDOW)
     )
     .then(1)
     .otherwise(0)
@@ -218,7 +226,7 @@ summary = {
     "dyn_rows": dyn_df.height,
     "sta_rows": sta_df.height,
     "outc_rows": outc_df.height,
-    "label_semantics": "1 iff AKI onset (corrected aki>=1) occurs in (t, t+6] -- see script docstring",
+    "label_semantics": "1 iff abs(onset_hour - t) <= 6 for corrected aki>=1 onset -- see script docstring",
     "start_wall_time": start_wall,
     "end_wall_time": end_wall,
     "elapsed_seconds": round(elapsed, 1),
