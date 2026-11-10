@@ -12,10 +12,10 @@ output directory that only exists on one machine.
 import json
 import time
 
-from render_config import render_extraction_config
+from fidelity.render_config import render_extraction_config
 from weavehr import ConceptStep, ExtractionStep, WeavEHRProject
 
-from paths import CONFIG_DIR, PROJECT_PATH
+from fidelity.paths import CONFIG_DIR, PROJECT_PATH
 
 render_extraction_config()
 

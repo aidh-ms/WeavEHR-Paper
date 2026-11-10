@@ -21,6 +21,7 @@ dependencies = [
     "weavehr>=0.0.1",
     "openicu-yaib @ git+https://github.com/georginapetr/openicu-yaib.git@fad153bb3c31cedb63765ce44dec10250d3699e6",
     "matplotlib>=3.9",
+    "scipy>=1.13",
 ]
 
 [project.urls]
@@ -59,7 +60,7 @@ exclude-newer-package = { weavehr = false }
 # PYTHONPATH=<experiment>/src (see its .sbatch files) rather than imported
 # as part of the top-level src/ package -- registered here too so `ty check .`
 # can resolve its internal imports the same way.
-extra-paths = ["experiments/fidelity/src"]
+extra-paths = ["experiments/fidelity/src", "experiments/interoperability/src"]
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py", "*_test.py"]
