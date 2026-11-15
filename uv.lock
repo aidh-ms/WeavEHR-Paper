@@ -1621,6 +1621,7 @@ name = "weavehr-paper"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
+    { name = "polars" },
     { name = "weavehr" },
 ]
 
@@ -1637,7 +1638,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "weavehr", specifier = ">=0.0.1" }]
+requires-dist = [
+    { name = "polars", specifier = ">=2.1.0" },
+    { name = "weavehr", specifier = ">=0.0.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [
