@@ -155,7 +155,7 @@ files (eICU `patientunitstayid`, MIMIC-IV `stay_id`, AUMC `admissionid` = OMOP `
 | `provenance.json` | time of the run; SHA-256 and git commit of this script, and whether it had uncommitted changes; Python and polars versions; parameters; per input file its path, size, SHA-256 and the types of `stay_id` and `time` |
 | `upstream_versions.txt` | written in step 5 |
 
-`results/` is git-ignored: commit results only deliberately, after review.
+`results/` and `aggregates/` contain locally generated results and are excluded from version control. Do not commit or push generated fidelity CSV files. Reproduce the results locally using the documented pipeline.
 
 ## Method
 
