@@ -1602,7 +1602,7 @@ wheels = [
 
 [[package]]
 name = "weavehr"
-version = "0.1.1"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "meds" },
@@ -1611,9 +1611,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/87/65ff30e3946d72acd5dcf993dc36834951d8184295076acdbc17826b2213/weavehr-0.1.1.tar.gz", hash = "sha256:92f449082686c6828fecb17eea08af95bb160ac0bb955e5a67322e9c83bbe2f5", size = 134713, upload-time = "2026-11-03T20:24:23.809Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/ff/51d116e619d243f92bbf29259cabf45dce3746dffed782bb091af2c64eb9/weavehr-0.1.2.tar.gz", hash = "sha256:d5f2153647f10d1781e69f9068cd92e86b3cabf840f80b07f64a2fd7de703069", size = 149083, upload-time = "2026-11-06T22:10:37.405Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/2d/9e3d89ff57540d78e9492189270ec010c36d1cf7cfe46fe2ade4bcdb5b6d/weavehr-0.1.1-py3-none-any.whl", hash = "sha256:004b1a3b72934b9c8252b5e51e3766115c5c4d1c729f689c824f216b006249c6", size = 449011, upload-time = "2026-11-03T20:24:22.31Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/3c/b38cf645afc94c72effb8f23955d7ad10d9da0d49a80516eea8f52c28072/weavehr-0.1.2-py3-none-any.whl", hash = "sha256:0a43a1b1505b84d991e8c24acb2462d6e28ffc2c09daf09a61f325049b0157de", size = 470942, upload-time = "2026-11-06T22:10:35.955Z" },
 ]
 
 [[package]]
