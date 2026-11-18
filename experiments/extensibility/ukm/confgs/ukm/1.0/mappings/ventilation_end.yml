@@ -1,0 +1,8 @@
+type: simple
+mappings:
+  - pattern:
+      table: ventilation_episodes
+      event: ventilation_end
+      code: ventilation_end
+    columns:
+      numeric_value: col(numeric_value)

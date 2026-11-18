@@ -1,0 +1,17 @@
+type: simple
+mappings:
+  - pattern:
+      table: medications
+      event: INFUSION_START
+      code: "(<Phenylephrine Item ID 1>(//.*)?|<Phenylephrine Item ID 2>(//.*)?)<Phenylephrine Name>.*//<Milligram Unit>$"
+    columns:
+      numeric_value: col(numeric_value) / 1000
+      text_value: col(text_value)
+  - pattern:
+      table: medications
+      event: INFUSION_START
+      code: "(<Phenylephrine Item ID 1>(//.*)?|<Phenylephrine Item ID 2>(//.*)?)<Phenylephrine Name>.*//<Microgram Unit>$"
+    columns:
+      numeric_value: col(numeric_value) 
+      text_value: col(text_value)
+      

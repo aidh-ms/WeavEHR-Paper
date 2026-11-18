@@ -1,0 +1,10 @@
+type: simple
+mappings:
+  - pattern:
+      table: icu_stay
+      event: PATIENT_SEX
+      code: PATIENT_SEX
+    columns:
+      numeric_value: col(numeric_value)
+      text_value: col(text_value)
+

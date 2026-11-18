@@ -1,0 +1,73 @@
+path: eventlog.csv.gz
+
+columns:
+  # subject_id and extentions
+  - name: <Patient ID Column>
+    type: string
+  # db fields - times
+  - name: <Event Start Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+    # db fields - values
+  - name: <Item ID Column>
+    type: int64
+  - name: <Text Value Column>
+    type: string
+  - name: <Numeric Value Column>
+    type: float32
+
+join:
+  - name: staylog
+    path: staylog.csv.gz
+    columns:
+      - name: <Patient ID Column>
+        type: string
+      - name: <Stay ID Column>
+        type: string 
+      - name: <ICU Admission Column>
+        type: datetime
+        params:
+          format: "%Y-%m-%d %H:%M:%S"
+      - name: <ICU Discharge Column>
+        type: datetime
+        params:
+          format: "%Y-%m-%d %H:%M:%S"
+    both_on:
+      - <Patient ID Column>
+    callbacks:
+      - dense_rank_encode(<Stay ID Column>, output=subject_id)
+
+  - name: items
+    path: items.csv.gz
+    columns:
+      - name: <Item ID Column>
+        type: int64
+      - name: <Item Name Column>
+        type: string
+    both_on:
+      - <Item ID Column>
+
+event_defaults:
+  subject_id: col(subject_id)
+  extension: 
+    stay_id: col(<Stay ID Column>)
+    patientid: col(<Patient ID Column>)
+
+events:
+  - name: LAB
+    columns:
+      time: col(<Event Start Column>)
+      code:
+        - col(<Item ID Column>)
+        - col(<Item Name Column>)
+      numeric_value: col(<Numeric Value Column>)
+      text_value: col(<Text Value Column>)
+    filters: 
+      - greater_equal(<Event Start Column>, <ICU Admission Column>) & less_equal(<Event Start Column>, <ICU Discharge Column>)
+
+
+
+
+      
+    
