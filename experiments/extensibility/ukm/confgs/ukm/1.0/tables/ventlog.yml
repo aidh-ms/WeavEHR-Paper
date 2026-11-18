@@ -1,0 +1,64 @@
+path: ventlog.csv.gz
+
+columns:
+  # subject_id and extentions
+  - name: <Patient ID Column>
+    type: string
+  - name: <Stay ID Column>
+    type: string 
+  # db fields - times
+  - name: <Ventilation Start Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+  - name: <Ventilation End Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+    # db fields - values
+  - name: <Episode Number Column>
+    type: int64
+
+join:
+  - name: staylog
+    path: staylog.csv.gz
+    columns:
+      - name: <Patient ID Column>
+        type: string
+      - name: <Stay ID Column>
+        type: string 
+      - name: <ICU Admission Column>
+        type: datetime
+        params:
+          format: "%Y-%m-%d %H:%M:%S"
+      - name: <ICU Discharge Column>
+        type: datetime
+        params:
+          format: "%Y-%m-%d %H:%M:%S"
+    both_on:
+      - <Patient ID Column>
+    callbacks:
+      - dense_rank_encode(<Stay ID Column>, output=subject_id)
+
+event_defaults:
+  subject_id: col(subject_id)
+  extension: 
+    stay_id: col(<Stay ID Column>)
+    patientid: col(<Patient ID Column>)
+
+events:
+  - name: ventilation_start
+    columns:
+      time: col(<Ventilation Start Column>)
+      code:
+        - const("ventilation_start")
+    filters: 
+      - greater_equal(<Ventilation Start Column>, <ICU Admission Column>) & less_equal(<Ventilation Start Column>, <ICU Discharge Column>)
+  - name: ventilation_end 
+    columns:
+      time: col(<Ventilation End Column>)
+      code:
+        - const("ventilation_end")
+    filters: 
+      - greater_equal(<Ventilation End Column>, <ICU Admission Column>) & less_equal(<Ventilation End Column>, <ICU Discharge Column>)
+    

@@ -1,0 +1,11 @@
+type: simple
+mappings:
+  - pattern:
+      table: icu_stay
+      event: ICU_LENGTH_OF_STAY
+      code: ICU_LENGTH_OF_STAY
+    columns:
+      numeric_value: col(numeric_value)
+      text_value: col(text_value)
+
+  

@@ -1,0 +1,97 @@
+path: staylog.csv.gz
+
+columns:
+  # subject_id and extentions
+  - name: <Stay ID Column>
+    type: string
+  - name: <Patient ID Column>
+    type: string
+  # db fields - times
+  - name: <ICU Admission Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+  - name: <ICU Discharge Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+  - name: <Date of Death Column>
+    type: datetime
+    params:
+      format: "%Y-%m-%d %H:%M:%S"
+  # db fields - values
+  - name: <Departments Column>
+    type: string
+  - name: <Stay Frequency Column>
+    type: int64
+  - name: <Weight Column> 
+    type: float32
+  - name: <Height Column>
+    type: float32 
+  - name: <Age Column> 
+    type: float32
+  - name: <Gender Column>
+    type: string
+  - name: <Death Column> 
+    type: int64
+
+callbacks:
+- dense_rank_encode(<Stay ID Column>, output=subject_id)
+
+event_defaults:
+  subject_id: col(subject_id)
+  extension:
+    patientid: col(<Patient ID Column>)
+    stay_id: col(<Stay ID Column>)
+
+events:
+  - name: ICU_ADMISSION
+    columns:
+      code:
+        - const("ICU_ADMISSION")
+      time: col(<ICU Admission Column>)
+      extension:
+        available_time: col(<ICU Admission Column>)
+  - name: ICU_DISCHARGE
+    columns:
+      code:
+        - const("ICU_DISCHARGE")
+      time: col(<ICU Discharge Column>)
+      extension:
+        available_time: col(<ICU Discharge Column>)
+  - name: PATIENT_HEIGHT
+    columns:
+      time: col(<ICU Admission Column>)
+      code: 
+        - const("PATIENT_HEIGHT")
+      numeric_value: col(<Height Column>)
+  - name: PATIENT_WEIGHT
+    columns:
+      time: col(<ICU Admission Column>)
+      code:
+        - const("PATIENT_WEIGHT")
+      numeric_value: col(<Weight Column>)
+  - name: PATIENT_SEX 
+    columns:
+      time: col(<ICU Admission Column>)
+      code:
+        - const("PATIENT_SEX")
+      text_value: col(<Gender Column>)
+  - name: PATIENT_AGE
+    columns:
+      time: col(<ICU Admission Column>)
+      code:
+        - const("PATIENT_AGE")
+      numeric_value: col(<Age Column>)
+  - name: ICU_DEATH 
+    columns:
+      time: col(<Date of Death Column>)
+      code:
+        - const("ICU_DEATH")
+      numeric_value: col(<Death Column>)
+  - name: ICU_LENGTH_OF_STAY
+    columns:
+      time: col(<ICU Admission Column>)
+      code:
+        - const("ICU_LENGTH_OF_STAY")
+      numeric_value: datetime_diff_days(<ICU Admission Column>, <ICU Discharge Column>)

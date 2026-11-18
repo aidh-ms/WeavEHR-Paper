@@ -1,0 +1,9 @@
+type: simple
+mappings:
+  - pattern:
+      table: events
+      event: LAB
+      code: (^<Total Bilirubin Item ID>(//.*)?)
+    columns:
+      numeric_value: col(numeric_value)
+      text_value: col(text_value)
