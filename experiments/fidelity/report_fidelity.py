@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """Report concept fidelity from aggregated metrics only. Never reads clinical data."""
+
 import argparse
 import csv
 import math
 from pathlib import Path
 
 REQUIRED = (
-    "dataset", "concept", "buckets_both_value", "buckets_different",
-    "presence_disagreement_pct", "mrd_pct",
+    "dataset",
+    "concept",
+    "buckets_both_value",
+    "buckets_different",
+    "presence_disagreement_pct",
+    "mrd_pct",
 )
+
 
 def percent(value: str) -> float:
     try:
@@ -16,6 +22,7 @@ def percent(value: str) -> float:
     except (TypeError, ValueError):
         return math.nan
     return v if math.isfinite(v) else math.nan
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fidelity threshold report from aggregated CSV only")
@@ -51,17 +58,23 @@ def main() -> None:
         presence = percent(row["presence_disagreement_pct"])
         mrd = percent(row["mrd_pct"])
         values = (disagreement, presence, mrd)
-        status = "UNDEFINED" if not all(math.isfinite(v) for v in values) else (
-            "REVIEW" if any(v >= args.threshold for v in values) else "PASS"
+        status = (
+            "REVIEW"
+            if any(math.isfinite(v) and v >= args.threshold for v in values)
+            else "UNDEFINED"
+            if not all(math.isfinite(v) for v in values)
+            else "PASS"
         )
-        output_rows.append({
-            "dataset": row["dataset"],
-            "concept": row["concept"],
-            "value_disagreement_pct": disagreement,
-            "presence_disagreement_pct": presence,
-            "mrd_pct": mrd,
-            "status": status,
-        })
+        output_rows.append(
+            {
+                "dataset": row["dataset"],
+                "concept": row["concept"],
+                "value_disagreement_pct": disagreement,
+                "presence_disagreement_pct": presence,
+                "mrd_pct": mrd,
+                "status": status,
+            }
+        )
     output_rows.sort(key=lambda r: (r["dataset"], r["concept"]))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", newline="", encoding="utf-8") as stream:
@@ -75,8 +88,11 @@ def main() -> None:
         flagged = [row for row in selected if row["status"] != "PASS"]
         print(f"{dataset}: {passed}/{len(selected)} PASS; {len(flagged)} flagged (threshold: {args.threshold:g}%)")
         for row in flagged:
-            print(f"  {row['concept']}: {row['status']} | value={row['value_disagreement_pct']:.6g}% | presence={row['presence_disagreement_pct']:.6g}% | MRD={row['mrd_pct']:.6g}%")
+            print(
+                f"  {row['concept']}: {row['status']} | value={row['value_disagreement_pct']:.6g}% | presence={row['presence_disagreement_pct']:.6g}% | MRD={row['mrd_pct']:.6g}%"
+            )
     print(f"Aggregated concept report: {args.output}")
+
 
 if __name__ == "__main__":
     main()

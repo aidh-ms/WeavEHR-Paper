@@ -259,8 +259,15 @@ def compare_dataset(dataset: str, ricu_path: Path, weavehr_path: Path) -> tuple[
     return rows, coverage
 
 
-def input_paths(ricu_dir: Path, weavehr_dir: Path, dataset: str) -> tuple[Path, Path]:
+def input_paths(
+    ricu_dir: Path,
+    weavehr_dir: Path,
+    dataset: str,
+    ricu_variants: bool = False,
+) -> tuple[Path, Path]:
     ricu_src, weavehr_src = DATASETS[dataset]
+    if ricu_variants and dataset in ("eicu-crd", "mimic-iv"):
+        weavehr_src = f"{weavehr_src}-ricu"
     return ricu_dir / TASK / ricu_src / "dyn.parquet", weavehr_dir / TASK / weavehr_src / "dyn.parquet"
 
 
@@ -313,7 +320,11 @@ def provenance(paths: dict[str, tuple[Path, Path]]) -> dict[str, object]:
 
 
 def run(
-    ricu_dir: Path, weavehr_dir: Path, output_dir: Path, datasets: Sequence[str] = PAPER_DATASETS
+    ricu_dir: Path,
+    weavehr_dir: Path,
+    output_dir: Path,
+    datasets: Sequence[str] = PAPER_DATASETS,
+    ricu_variants: bool = False,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     """Compare all `datasets` and write fidelity_metrics.csv, coverage.csv and provenance.json to `output_dir`.
 
@@ -323,7 +334,7 @@ def run(
     unknown = [d for d in datasets if d not in DATASETS]
     if unknown:
         raise FidelityInputError(f"unknown datasets {unknown}; known: {list(DATASETS)}")
-    paths = {d: input_paths(ricu_dir, weavehr_dir, d) for d in datasets}
+    paths = {d: input_paths(ricu_dir, weavehr_dir, d, ricu_variants) for d in datasets}
     missing = [str(p) for pair in paths.values() for p in pair if not p.is_file()]
     if missing:
         raise FidelityInputError(f"missing input files {missing}; run the YAIB los task first or restrict --datasets")
@@ -348,9 +359,10 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--weavehr-dir", type=Path, required=True, help="YAIB-cohorts out_dir of the WeavEHR run")
     parser.add_argument("--output-dir", type=Path, required=True, help="directory for the aggregated CSV files")
     parser.add_argument("--datasets", nargs="+", default=list(PAPER_DATASETS), choices=list(DATASETS))
+    parser.add_argument("--ricu-variants", action="store_true")
     args = parser.parse_args(argv)
     try:
-        _, coverage = run(args.ricu_dir, args.weavehr_dir, args.output_dir, args.datasets)
+        _, coverage = run(args.ricu_dir, args.weavehr_dir, args.output_dir, args.datasets, args.ricu_variants)
     except FidelityInputError as e:
         sys.exit(f"error: {e}")
     with pl.Config(tbl_rows=-1, tbl_cols=-1, tbl_width_chars=200):
