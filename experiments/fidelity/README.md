@@ -1,5 +1,43 @@
 # Fidelity
 
+## Extended four-database fidelity evaluation
+
+The extended evaluation compares WeavEHR-based and ricu-based
+YAIB outputs across eICU-CRD, MIMIC-IV, HiRID and AmsterdamUMCdb.
+
+The evaluation includes:
+
+- Dynamic concept fidelity for 48 YAIB variables.
+- Bucket-level numerical agreement and observation coverage.
+- Concept-level value disagreement, presence disagreement and MRD.
+- Outcome-label fidelity for AKI and Mortality24.
+- Preliminary Sepsis-3 outcome-label fidelity.
+
+A concept is classified as concordant when all three
+concept-level disagreement metrics are defined and below 1%.
+
+The final evaluation includes updated concept mappings,
+ricu-compatible range filters and experimental
+reference-compatible AKI calculations.
+
+The experiment runners are available under `runners/`.
+They retain machine-specific paths and environment assumptions.
+Exact upstream revisions must be recorded for each experiment.
+End-to-end reproduction from a clean checkout has not yet
+been verified.
+
+Generated results and patient-level data are not distributed
+with this repository.
+
+---
+
+## Historical dynamic-concept experiment
+
+The following procedure documents an earlier experiment.
+Its revisions, configuration assumptions and limitations
+must not be interpreted as the configuration of the final
+four-database evaluation.
+
 How closely does WeavEHR reproduce `ricu` for the 48 dynamic YAIB variables? This experiment compares, per dataset
 and concept, the hourly values that the two backends of
 [YAIB-cohorts](https://github.com/rvandewater/YAIB-cohorts) produce for the first 7 days of each ICU stay of the
