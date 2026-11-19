@@ -221,7 +221,7 @@ is checked: `something = both_value + weavehr_only + ricu_only`, `both_value = i
   longer counts such a row once (`d23837e` did). These rows are counted twice in the hourly median, so the eICU
   `o2sat` result reflects this adapter defect, not WeavEHR's mappings. The same happens for AUMC with WeavEHR
   versions after 0.1.2 and for HiRID. Not fixed here (it belongs in YAIB-cohorts).
-- **HiRID.** Both evaluated YAIB backends successfully produced LoS outputs. All 32,338 stays and 1,506,256 hourly keys match; 48/48 concepts PASS. The evaluated local checkouts are not equivalent to a verified run of YAIB commit `eb2956e`.
+- **HiRID.** Record the evaluated backend revisions and mapping configuration for each run.
 - **AUMC.** The pinned WeavEHR (`2fcccb6`) predates WeavEHR 0.1.2's AUMC fixes (PCO2/PO2 recorded in kPa converted
   to mmHg; direct bilirubin from another item), which change AUMC values; choose and record the WeavEHR version.
   ricu reads native AmsterdamUMCdb 1.0.2, WeavEHR the 1.5.0 OMOP export; stay IDs correspond by the
@@ -239,57 +239,40 @@ is checked: `something = both_value + weavehr_only + ricu_only`, `both_value = i
 category, tolerance and MRD edge cases, different populations and grids, the 0/168 boundaries, both time types,
 invalid inputs, aggregate-only outputs and the provenance record.
 
-## Final fidelity results (2026-11-15)
 
-Evaluation uses the YAIB length-of-stay cohort and the intersection
-of `(stay_id, time)` keys, with hourly positions 0 through 168.
+## Additional experiment runners
 
-| Dataset | Common stays | Common hourly keys | PASS |
-|---|---:|---:|---:|
-| eICU-CRD | 182,788 | 10,670,965 | 48/48 |
-| MIMIC-IV | 92,972 | 6,241,533 | 48/48 |
-| HiRID | 32,338 | 1,506,256 | 48/48 |
-| AUMC | 20,432 | 1,185,417 | 0/48 |
+The `runners/` directory contains the scripts used for the
+extended fidelity experiments:
 
-PASS requires all three defined concept-level metrics to be below 1%:
-value disagreement, presence disagreement and mean relative difference.
+- `reference/`: ricu reference outcome generation.
+- `native/`: native WeavEHR concepts and outcome generation.
+- `compatibility/`: reference-compatible AKI and Sepsis-3 experiments.
+- `audit/`: diagnostic and validation scripts.
+- `historical/`: earlier experimental implementations.
 
-For AUMC, 26/48 concepts satisfy the value disagreement criterion,
-40/48 satisfy the MRD criterion, and 23/48 satisfy both numerical
-criteria. None satisfies the presence criterion. Therefore, 0/48
-PASS does not imply that the numerical values generally disagree.
+The runners retain machine-specific paths and environment
+assumptions. Review these before execution. Historical variants
+are retained for traceability.
 
-AUMC uses native AmsterdamUMCdb 1.0.2 through ricu and the
-AMSTEL-derived OMOP 1.5.0 representation through WeavEHR.
-Differences in encounter-relative timestamps, measurement coverage,
-and some concept definitions have been documented separately.
+Reference-compatible outcome calculations are experimental
+benchmark variants, not replacements for native clinical definitions.
 
-### Reproduce the comparison
+## Outcome fidelity
 
-After generating both YAIB LoS outputs:
+Use `compare_outcomes.py` to compare existing YAIB outcome outputs.
 
-    PYTHON=python3 bash experiments/fidelity/run_fidelity.sh \
-      /path/to/ricu-output \
-      /path/to/weavehr-output \
-      /path/to/aggregate-results/hirid \
-      hirid
+Use `report_fidelity.py` and `plot_fidelity.py` to generate reports
+and figures from aggregated dynamic-concept metrics.
 
-Repeat for `eicu-crd`, `mimic-iv`, `hirid`, and `aumc`.
+All generated results, figures, clinical data, logs and run-specific
+provenance files must remain outside version control.
 
-The runner produces `fidelity_metrics.csv`, `coverage.csv`,
-`provenance.json`, and `concept_report.csv`.
+## Validation
 
-All 41 synthetic tests passed. The HiRID comparison was repeated,
-and the three aggregate CSV files matched byte-for-byte.
+Run the synthetic comparison tests:
 
-### Provenance limitation
+    uv run pytest -q tests/ -k 'fidelity or outcome'
 
-The evaluated local YAIB checkouts were `02f7d90` (WeavEHR backend)
-and `8ed523c` (ricu backend), with local modifications.
-The exact WeavEHR revision used to generate every historical
-Parquet output has not been independently verified.
-
-The recorded comparison environment used Python 3.13.18 and
-Polars 1.42.1. Reproducing the comparison with fixed inputs
-does not independently establish reproducibility of every upstream
-data-processing step.
+Syntax validation of the runners does not establish end-to-end
+reproducibility of the upstream experiments.
